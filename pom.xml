@@ -55,6 +55,25 @@
           <version>3.0.2</version>
       </dependency>
 
+        <!-- Spring Data JPA (Database persistence with Hibernate) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- H2 Database (In-memory database for development/testing) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Validation API (required for Hibernate 5.6 compatibility) -->
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+        </dependency>
+
         <!-- Spring Boot Test Starter (Unit Testing) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
