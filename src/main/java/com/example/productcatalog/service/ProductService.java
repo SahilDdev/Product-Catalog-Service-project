@@ -4,8 +4,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.productcatalog.model.Product;
+import com.example.productcatalog.model.Review;
 import com.example.productcatalog.repository.ProductRepository;
+import com.example.productcatalog.repository.ReviewRepository;
 import com.example.productcatalog.exception.ProductNotFoundException;
 import java.util.List;
 
@@ -13,9 +16,38 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ReviewRepository reviewRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository, ReviewRepository reviewRepository) {
         this.productRepository = productRepository;
+        this.reviewRepository = reviewRepository;
+    }
+
+    @Transactional
+    public Product createProductWithReviews(Product product, List<Review> reviews) {
+        System.out.println("💾 Starting transaction: createProductWithReviews");
+
+        // Step 1: Save the product FIRST
+        Product savedProduct = productRepository.save(product);
+        System.out.println("✓ Product saved with ID: " + savedProduct.getId());
+
+        // Step 2: FAILURE CONDITION - Check AFTER product is saved
+        // This is intentional: product is already in DB at this point
+        // If reviews are empty, the exception should ROLLBACK the product save too
+        if (reviews == null || reviews.isEmpty()) {
+            System.out.println("✗ Reviews list is empty! Throwing exception...");
+            throw new RuntimeException("Reviews list cannot be empty! At least one review is required.");
+        }
+
+        // Step 3: Save all reviews with product reference
+        for (Review review : reviews) {
+            review.setProduct(savedProduct);
+            reviewRepository.save(review);
+            System.out.println("✓ Review saved: " + review.getComment());
+        }
+
+        System.out.println("✓ Transaction complete: Product + " + reviews.size() + " reviews saved");
+        return savedProduct;
     }
 
     public Page<Product> getAllProducts(int page, int size) {

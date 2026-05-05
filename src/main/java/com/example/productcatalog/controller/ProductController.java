@@ -6,10 +6,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import jakarta.validation.Valid;
 import com.example.productcatalog.model.Product;
+import com.example.productcatalog.model.Review;
 import com.example.productcatalog.dto.ProductDTO;
+import com.example.productcatalog.dto.ProductWithReviewsDTO;
 import com.example.productcatalog.service.ProductService;
 import com.example.productcatalog.response.SuccessResponse;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/products")
@@ -168,5 +171,42 @@ public class ProductController {
                                 null);
 
                 return ResponseEntity.ok(response);
+        }
+
+        @PostMapping("/with-reviews")
+        public ResponseEntity<SuccessResponse<Product>> createProductWithReviews(
+                        @RequestBody ProductWithReviewsDTO dto) {
+                System.out.println("\n✓ POST /products/with-reviews endpoint called");
+
+                // Convert DTO to Product entity
+                Product product = new Product();
+                product.setName(dto.getName());
+                product.setDescription(dto.getDescription());
+                product.setPrice(dto.getPrice());
+                product.setQuantity(dto.getQuantity());
+
+                // Convert review DTOs to Review entities
+                List<Review> reviews = null;
+                if (dto.getReviews() != null) {
+                        reviews = dto.getReviews().stream()
+                                        .map(r -> {
+                                                Review review = new Review();
+                                                review.setComment(r.getComment());
+                                                return review;
+                                        })
+                                        .collect(Collectors.toList());
+                }
+
+                // Call transactional method
+                Product createdProduct = productService.createProductWithReviews(product, reviews);
+
+                System.out.println("✓ Product created with reviews, ID: " + createdProduct.getId());
+
+                SuccessResponse<Product> response = new SuccessResponse<Product>(
+                                true,
+                                "Product created with reviews successfully",
+                                createdProduct);
+
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
 }
